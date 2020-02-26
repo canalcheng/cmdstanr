@@ -182,17 +182,7 @@ CmdStanModel <- R6::R6Class(
 #'     output.
 #'   * `include_paths`: (character vector) Paths to directories where Stan should
 #'     look for files specified in `#include` directives in the Stan program.
-#'   * `threads`: (logical) Should the model be compiled with
-#'     [threading support](https://github.com/stan-dev/math/wiki/Threading-Support)?
-#'     If `TRUE` then `-DSTAN_THREADS` is added to the compiler flags. See
-#'     [set_num_threads()] to set the number of threads, which is read by
-#'     CmdStan at run-time from an environment variable.
-#'   * `opencl`: (logical) Should the model be compiled with OpenCL support enabled?
-#'   * `opencl_platform_id`: (nonnegative integer) The ID of the OpenCL platform on which
-#'     to run the compiled model.
-#'   * `opencl_device_id`: (nonnegative integer) The ID of the OpenCL device on the selected
-#'     OpenCL platform on which to run the compiled model.
-#'   * `compiler_flags`: (character vector) Any additional compiler flags to be
+#'   * `stanc_options`: (character vector) Any Stan-to-C++ transpiler options or flags to be
 #'     used when compiling the model.
 #'
 #' @section Value: This method is called for its side effect of creating the
@@ -213,24 +203,9 @@ NULL
 
 compile_method <- function(quiet = TRUE,
                            include_paths = NULL,
-                           threads = FALSE,
-                           opencl = FALSE,
-                           opencl_platform_id = 0,
-                           opencl_device_id = 0,
-                           stanc_flags = NULL,
-                           compiler_flags = NULL) {
+                           stanc_options = NULL,
+                           force = FALSE) {
   exe <- strip_ext(self$stan_file())
-  make_local_changed <- set_make_local(threads,
-                                       opencl,
-                                       opencl_platform_id,
-                                       opencl_device_id,
-                                       stanc_flags,
-                                       compiler_flags)
-  # rebuild main.o and the model if there was a change in make/local
-  if (make_local_changed) {
-    message("A change in the compiler flags was found. Forcing recompilation.\n")
-    build_cleanup(exe, remove_main = TRUE)
-  }
   # add path to the build tbb library to the PATH variable to avoid copying the dll file
   if (cmdstan_version() >= "2.21" && os_is_windows()) {
     path_to_TBB <- file.path(cmdstan_path(), "stan", "lib", "stan_math", "lib", "tbb")
@@ -244,10 +219,22 @@ compile_method <- function(quiet = TRUE,
     include_paths <- paste0("STANCFLAGS += --include_paths=", include_paths)
   }
 
+  if (!is.null(stanc_options)) {
+    stanc_built_options = c()
+    for (i in seq_len(length(stanc_options))) {
+      if (isTRUE(as.logical(stanc_options[[i]]))) {
+        stanc_built_options = c(stanc_built_options, paste0("--",names(stanc_options)[i]))
+      } else {
+        stanc_built_options = c(stanc_built_options, paste0("--", names(stanc_options)[i], "=", "'", stanc_options[[i]], "'"))
+      }
+    }
+    stanc_built_options <- paste0("STANCFLAGS += ",paste0(stanc_built_options, collapse = " "))
+  }
+
   exe <- cmdstan_ext(exe) # adds .exe on Windows
   run_log <- processx::run(
     command = make_cmd(),
-    args = c(exe, include_paths),
+    args = c(exe, include_paths, stanc_built_options),
     wd = cmdstan_path(),
     echo_cmd = !quiet,
     echo = !quiet,
