@@ -315,6 +315,25 @@ build_cleanup <- function(model_path, remove_main = FALSE) {
   }
 }
 
+#' Set cmdstan make options
+#'
+#' @export
+#'
+set_cmdstan_cpp_options <- function(cpp_options) {
+  cpp_built_options <- c()
+  if (!is.null(cpp_options)) {
+    for (i in seq_len(length(cpp_built_options))) {
+      if (isTRUE(as.logical(cpp_built_options[[i]]))) {
+        cpp_built_options = c(cpp_built_options, paste0(names(stanc_options)[i]),"=TRUE",)
+      } else {
+        cpp_built_options = c(cpp_built_options, paste0(names(stanc_options)[i], "+= ", stanc_options[[i]]))
+      }
+    }
+    cpp_built_options <- paste0(cpp_built_options, collapse = " ")
+  }
+  print(cpp_built_options)
+}
+
 set_make_local <- function(threads = FALSE,
                            opencl = FALSE,
                            opencl_platform_id = 0,
