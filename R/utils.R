@@ -320,18 +320,19 @@ build_cleanup <- function(model_path, remove_main = FALSE) {
 #' @export
 #'
 set_cmdstan_cpp_options <- function(cpp_options) {
+  allowed_cpp_options = c('STAN_OPENCL', 'OPENCL_DEVICE_ID', 'OPENCL_PLATFORM_ID', 'STAN_MPI', 'STAN_THREADS')
   cpp_built_options <- c()
   if (!is.null(cpp_options)) {
-    for (i in seq_len(length(cpp_built_options))) {
-      if (isTRUE(as.logical(cpp_built_options[[i]]))) {
-        cpp_built_options = c(cpp_built_options, paste0(names(stanc_options)[i]),"=TRUE",)
+    for (i in seq_len(length(cpp_options))) {
+      name_upper <- toupper(names(cpp_options)[i])
+      if (isTRUE(as.logical(cpp_options[[i]]))) {
+        cpp_built_options <- c(cpp_built_options, paste0(name_upper, "=TRUE"))
       } else {
-        cpp_built_options = c(cpp_built_options, paste0(names(stanc_options)[i], "+= ", stanc_options[[i]]))
+        cpp_built_options <- c(cpp_built_options, paste0(name_upper, "=", cpp_options[[i]]))
       }
     }
     cpp_built_options <- paste0(cpp_built_options, collapse = " ")
   }
-  print(cpp_built_options)
 }
 
 set_make_local <- function(threads = FALSE,

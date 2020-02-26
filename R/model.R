@@ -222,10 +222,11 @@ compile_method <- function(quiet = TRUE,
   if (!is.null(stanc_options)) {
     stanc_built_options = c()
     for (i in seq_len(length(stanc_options))) {
+      option_name <- names(stanc_options)[i]
       if (isTRUE(as.logical(stanc_options[[i]]))) {
-        stanc_built_options = c(stanc_built_options, paste0("--",names(stanc_options)[i]))
+        stanc_built_options = c(stanc_built_options, paste0("--", option_name))
       } else {
-        stanc_built_options = c(stanc_built_options, paste0("--", names(stanc_options)[i], "=", "'", stanc_options[[i]], "'"))
+        stanc_built_options = c(stanc_built_options, paste0("--", option_name, "=", "'", stanc_options[[i]], "'"))
       }
     }
     stanc_built_options <- paste0("STANCFLAGS += ",paste0(stanc_built_options, collapse = " "))
