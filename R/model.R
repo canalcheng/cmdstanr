@@ -666,11 +666,11 @@ process_data <- function(data) {
       path <- tempfile(pattern = "standata-", fileext = ".json")
       write_stan_json(data = data, file = path)
     } else {
-      path <- tempfile(pattern = "standata-", fileext = ".dat")
-      if (!requireNamespace("rstan", quietly = TRUE)) {
-        stop("For CmdStan < 2.22 the rstan package is required for writing data.")
-      }
-      rstan::stan_rdump(names(data), file = path, env = list2env(data))
+      stop(
+        "For CmdStan < 2.22 data must be specified as a file created by 'rstan::stan_rdump()'. ",
+        "To use a named list or JSON file please update your CmdStan installation.",
+        call. = FALSE
+      )
     }
   } else {
     stop("'data' should be a path or a named list.", call. = FALSE)

@@ -29,7 +29,6 @@ Suggests:
     jsonlite (>= 1.2.0),
     knitr,
     rmarkdown,
-    rstan,
     testthat (>= 2.1.0)
 VignetteBuilder: knitr
 Remotes: 
